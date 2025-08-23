@@ -1,68 +1,24 @@
-from crawler import crawl_tech_news
-from curator import curate_articles
+from crawler import curate_tech_news, parse_article
 from approval import send_approval_email, send_test_email
 import json
-import tweepy
-import time
 import nltk
-from nltk.tokenize import word_tokenize
-from nltk.corpus import stopwords
-import requests
+from poster import generate_post_text, search_image, download_image
+import matplotlib.pyplot as plt
+from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 
-def extract_keywords(text):
-    """Extract relevant keywords from text using NLTK."""
-    stop_words = set(stopwords.words('english'))
-    tokens = word_tokenize(text.lower())
-    # Filter out stopwords, punctuation, and short words
-    keywords = [word for word in tokens if word.isalnum() and word not in stop_words and len(word) > 3]
-    # Return top 3 keywords (or fewer if not enough)
-    return keywords[:3]
-
-def search_image(keywords, api_key):
-    """Search for an image on Pixabay using keywords."""
-    if not api_key:
-        print("Pixabay API key not found in .env")
-        return None
-
-    query = '+'.join(keywords)
-    url = f"https://pixabay.com/api/?key={api_key}&q={query}&image_type=photo&per_page=3"
-    try:
-        response = requests.get(url, timeout=10)
-        response.raise_for_status()
-        data = response.json()
-        if data.get('hits'):
-            # Return the URL of the first image (highest relevance)
-            return data['hits'][0]['webformatURL']
-        else:
-            print(f"No images found for keywords: {keywords}")
-            return None
-    except requests.RequestException as e:
-        print(f"Error searching Pixabay: {e}")
-        return None
-def download_image(image_url, filename='temp_image.jpg'):
-    """Download an image from a URL and save it locally."""
-    try:
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-        }
-        response = requests.get(image_url, headers=headers, stream=True)
-        if response.status_code == 200:
-            with open(filename, 'wb') as f:
-                for chunk in response.iter_content(1024):
-                    f.write(chunk)
-            print(f"Downloaded image to {filename}")
-            return filename
-        else:
-            print(f"Failed to download image from {image_url}: Status {response.status_code}")
-            return None
-    except Exception as e:
-        print(f"Error downloading image: {e}")
-        return None
 # Download NLTK data for keyword extraction
-
+plt.rcParams["font.family"] = 'FiraCode Nerd Font'
 with open('config.json', 'r') as f:
     config = json.load(f)
 
+
+x_keys = [config['x_api_credentials']['consumer_key'],
+        config['x_api_credentials']['consumer_secret'],
+        config['x_api_credentials']['access_token'],
+        config['x_api_credentials']['access_token_secret']]
+
+rss_urls = ["https://www.defensenews.com/arc/outboundfeeds/rss/category/unmanned/?outputType=xml", "https://www.technologyreview.com/feed/", "https://www.wired.com/feed/tag/ai/latest/rss" ,"https://www.techmeme.com/feed.xml", "https://techcrunch.com/feed/", "https://www.theverge.com/rss/index.xml", "https://spectrum.ieee.org/customfeeds/feed/all-topics/rss", "https://breakingdefense.com/full-rss-feed/?v=2","https://feeds.feedburner.com/venturebeat/SZYF", "https://www.twz.com/feed" ]
+tech_keywords = ['AI', 'blockchain', 'quantum', 'VR', 'AR', 'robotics', 'LLM', 'military', 'unmanned', 'drone', 'autonomous', 'breakthrough', 'cryptocurrency', 'billion', 'trillion', 'machine', 'deep', 'algorithm', 'learning', 'arrested', 'disaster', 'security', 'risk', 'danger', 'warfare', 'advanced', 'advancement', 'discover', 'streamer', 'youtuber', 'director', 'president', 'auto', 'robot']
 
 if __name__ == "__main__":
     try:
@@ -72,62 +28,34 @@ if __name__ == "__main__":
         nltk.download('punkt')
         nltk.download('punkt_tab')
         nltk.download('stopwords')
-    count = 0
-
-    while(count < 5):
-        res = crawl_tech_news()
-        top = curate_articles(res)
-        print(top)
-        # send_approval_email(top, 'imsladx@gmail.com')
-        auth = tweepy.OAuth1UserHandler(
-            config['x_api_credentials']['consumer_key'],
-            config['x_api_credentials']['consumer_secret'],
-            config['x_api_credentials']['access_token'],
-            config['x_api_credentials']['access_token_secret']
-        )
-
-        api = tweepy.API(auth)
-
-        client = tweepy.Client(
-            consumer_key=config['x_api_credentials']['consumer_key'],
-            consumer_secret=config['x_api_credentials']['consumer_secret'],
-            access_token=config['x_api_credentials']['access_token'],
-            access_token_secret=config['x_api_credentials']['access_token_secret']
-        )
-
-        post=top[0]['title']
-        media_ids = []
-            # Extract keywords from article title and summary
-        text = f"{post}"
-        keywords = extract_keywords(text)
-        print(f"Keywords for image search: {keywords}")
-
-        # Search for an image using keywords
-        image_url = search_image(keywords, config['pixabay_api_key'])
-        if image_url:
-            # Download the image
-            filename = download_image(image_url)
-            if filename:
-                try:
-                    # Upload image using v1.1 API
-                    media = api.media_upload(filename)
-                    media_ids = [media.media_id]
-                    print(f"Uploaded image, media_id: {media.media_id}")
-                    print(f"Deleted temporary file {filename}")
-                except tweepy.TweepyException as e:
-                    print(f"Error uploading media: {e} (Status: {e.response.status_code if e.response else 'Unknown'})")
-
-
-        try:
-            response = client.create_tweet(text=post, media_ids=media_ids if media_ids else None)
-            print(f"Posted to X: {post} (Tweet ID: {response.data['id']})")
-        except tweepy.TweepyException as e:
-            if e.response.status_code == 429:
-                retry_after = int(e.response.headers.get('retry-after', 60))
-                print(f"Rate limit hit. Waiting {retry_after} seconds...")
-                time.sleep(retry_after)
-                response = client.create_tweet(text=post)
-                print(f"Posted to X after retry: {post}")
+    res = curate_tech_news(rss_urls, tech_keywords)
+    top = []
+    for r in res:
+        fig, ax = plt.subplots(layout='tight')
+        r['post_text'] = generate_post_text(r['summary'], config['genai_key'])
+        img_path = download_image(r['img'])
+        ax.text(-1.5, 1.2, r['post_text'], fontsize=14, wrap=True)
+        if img_path:
+            image = plt.imread(img_path)
+            ax.imshow(image)
+        else:
+            try:
+                image_url = search_image(r['keywords'], config['pixabay_api_key'])
+            except Exception as e:
+                print(f"{e}")
             else:
-                print(f"Error posting to X: {e} (Status: {e.response.status_code if e.response else 'Unknown'})")
-        time.sleep(300)
+                image_path = download_image(image_url)
+                if image_path:
+                    image = plt.imread(image_path)
+                    ax.imshow(image)
+        plt.show()
+        top.append(r)
+    # while(count < 5):
+    #     res = crawl_tech_news()
+    #     top = curate_articles(res)
+    #     print(top)
+    #     # send_approval_email(top, 'imsladx@gmail.com')
+    #
+    #     post=top[0]['title']
+    #     
+    #     time.sleep(300)
