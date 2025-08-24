@@ -5,13 +5,15 @@ import requests
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 
+
 def extract_keywords(text):
     """Extract relevant keywords from text using NLTK."""
-    stop_words = set(stopwords.words('english'))
+    stop_words = set(stopwords.words("english"))
     tokens = word_tokenize(text.lower())
     # Filter out stopwords, punctuation, and short words
     keywords = [word for word in tokens if word.isalnum() and word not in stop_words]
     return keywords
+
 
 def score_article(text, keywords):
     # Simple scoring based on keywords and length
@@ -34,15 +36,18 @@ def parse_article(url, score_keywords):
     authors = article.authors
     summary = article.summary  # Truncate if needed
     image_url = article.top_image
-    article_keywords = set(extract_keywords(title)).union(set(extract_keywords(summary)))
+    article_keywords = set(extract_keywords(title)).union(
+        set(extract_keywords(summary))
+    )
     score = score_article(article_keywords, score_keywords)
-    parsing = {'title': title,
-               'author(s)': authors,
-               'summary': summary,
-               'img':image_url,
-               'keywords': article_keywords,
-               'score': score
-               }
+    parsing = {
+        "title": title,
+        "author(s)": authors,
+        "summary": summary,
+        "img": image_url,
+        "keywords": article_keywords,
+        "score": score,
+    }
     return parsing
 
 
@@ -59,14 +64,14 @@ def curate_tech_news(rss_urls, keywords):
             for entry in feed.entries:
                 try:
                     parse = parse_article(entry.link, keywords)
-                    print(parse['score'], entry.link)
+                    print(parse["score"], entry.link)
                 except Exception as e:
                     print(f"{e}")
                     continue
                 else:
                     articles.append(parse)
     try:
-        return sorted(articles, key=lambda x: x['score'], reverse=True)[:10]
+        return sorted(articles, key=lambda x: x["score"], reverse=True)[:10]
     except Exception as e:
         print(f"Nothing to sort {e}")
         return articles
