@@ -683,20 +683,20 @@ if __name__ == "__main__":
     for r in res:
         imgs = []
         r["post_text"] = generate_post_text(r["summary"], config["genai_key"])
-        print(r['post_text'])
+        print(r["post_text"])
         res_img = download_image(r["img"], filename="./imgs/res.jpg")
         if res_img:
             fig, ax = plt.subplots(layout="tight")
             image = plt.imread(res_img)
             ax_img = ax.imshow(image)
             left, right, bottom, top = ax_img.get_extent()
-            ax.text(0, 0 - (2*(bottom / 40)), r["post_text"], fontsize=10, wrap=True)
-            ax.text(0, 0 - ((bottom / 40)), r["url"], fontsize=10, wrap=True)
+            ax.text(0, 0 - (2 * (bottom / 40)), r["post_text"], fontsize=10, wrap=True)
+            ax.text(0, 0 - (bottom / 40), r["url"], fontsize=10, wrap=True)
             ax.text(0, 0, r["keywords"], fontsize=10, wrap=True)
             plt.show()
         else:
             fig, ax = plt.subplots(layout="tight")
-            ax.text(0, 0 - (2*40), r["post_text"], fontsize=10, wrap=True)
+            ax.text(0, 0 - (2 * 40), r["post_text"], fontsize=10, wrap=True)
             ax.text(0, 0 - 40, r["url"], fontsize=10, wrap=True)
             ax.text(0, 0, r["keywords"], fontsize=10, wrap=True)
             plt.show()
