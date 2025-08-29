@@ -2,6 +2,7 @@ from crawler import curate_tech_news, soup_crawl
 from approval import send_approval_email, send_test_email
 import json
 import nltk
+
 from poster import (
     generate_post_text,
     search_image_pixabay,
@@ -33,6 +34,10 @@ soups_urls = [
 rss_urls = [
     "https://taskandpurpose.com/feed/",
     "https://www.army-technology.com/feed/",
+    "https://www.nasa.gov/feed/",
+    "https://www.nasa.gov/news-release/feed/",
+    "https://spacenews.com/feed/",
+    "https://www.nasa.gov/technology/feed/",
     "https://www.defensenews.com/arc/outboundfeeds/rss/category/air/?outputType=xml",
     "https://www.defensenews.com/arc/outboundfeeds/rss/category/land/?outputType=xml",
     "https://www.defensenews.com/arc/outboundfeeds/rss/category/naval/?outputType=xml",
@@ -94,6 +99,7 @@ tech_keywords = [
     "doi",
     "nsa",
     "hsa",
+    "hot",
     "potus",
     "scotus",
     "america",
@@ -129,6 +135,14 @@ tech_keywords = [
     "vr",
     "ar",
     "ufo",
+    "extraterrestrial",
+    "orbit",
+    "monitor",
+    "uap",
+    'aerial',
+    'unidentified',
+    'phenomenon',
+    'phenomena',
     "alien",
     "uav",
     "action",
@@ -154,6 +168,9 @@ tech_keywords = [
     "weapon",
     "missiles",
     "launch",
+    "launched",
+    "launching",
+    "launches",
     "power",
     "powerful",
     "plane",
@@ -251,6 +268,7 @@ tech_keywords = [
     "technological",
     "technologic",
     "technologically",
+    "technologies",
     "board",
     "mother",
     "component",
@@ -370,6 +388,8 @@ tech_keywords = [
     "defense",
     "shield",
     "star",
+    "starship",
+    "starships",
     "national",
     "nation",
     "pentagon",
@@ -563,6 +583,7 @@ tech_keywords = [
     "arsenal",
     "armory",
     "treasury",
+    "targeting",
     "target",
     "targeted",
     "targets",
@@ -666,6 +687,18 @@ tech_keywords = [
     "provide",
     "provides",
     "provided",
+    "antiair",
+    "surveillance",
+    "camera",
+    "record",
+    "recording",
+    "records",
+    "recorded",
+    "outer",
+    "asteroid",
+    "comet",
+    "scientists",
+    "raid"
 ]
 
 if __name__ == "__main__":
@@ -690,15 +723,15 @@ if __name__ == "__main__":
             image = plt.imread(res_img)
             ax_img = ax.imshow(image)
             left, right, bottom, top = ax_img.get_extent()
-            ax.text(0, 0 - (2 * (bottom / 40)), r["post_text"], fontsize=10, wrap=True)
-            ax.text(0, 0 - (bottom / 40), r["url"], fontsize=10, wrap=True)
-            ax.text(0, 0, r["keywords"], fontsize=10, wrap=True)
+            ax.text(0, -200, r["post_text"], fontsize=8, wrap=True)
+            ax.text(0, -100, r["url"], fontsize=8, wrap=True)
+            ax.text(0, 0, r["keywords"], fontsize=8, wrap=True)
             plt.show()
         else:
             fig, ax = plt.subplots(layout="tight")
-            ax.text(0, 0 - (2 * 40), r["post_text"], fontsize=10, wrap=True)
-            ax.text(0, 0 - 40, r["url"], fontsize=10, wrap=True)
-            ax.text(0, 0, r["keywords"], fontsize=10, wrap=True)
+            ax.text(0, 0 - (2 * 80), r["post_text"], fontsize=8, wrap=True)
+            ax.text(0, 0 - 80, r["url"], fontsize=8, wrap=True)
+            ax.text(0, 0, r["keywords"], fontsize=8, wrap=True)
             plt.show()
         imgs.append(res_img)
     # try:

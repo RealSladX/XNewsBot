@@ -14,7 +14,7 @@ def score_article(text, keywords):
     for keyword in keywords:
         if keyword.lower() in text:
             score += 10
-    score += len(text) / 10
+    score += len(text)
     return score
 
 
