@@ -5,6 +5,7 @@ import requests
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from bs4 import BeautifulSoup
+from database import is_article_cached, store_article
 
 
 def score_article(text, keywords):
@@ -14,7 +15,7 @@ def score_article(text, keywords):
     for keyword in keywords:
         if keyword.lower() in text:
             score += 10
-    score += len(text)
+    score += (score + 1) / len(text)
     return score
 
 
@@ -62,9 +63,7 @@ def soup_crawl(url):
 
 
 def curate_tech_news(rss_urls, keywords):
-    articles = []
     for rss in rss_urls:
-        prev_len = len(articles)
         try:
             feed = feedparser.parse(rss)
         except Exception as e:
@@ -73,28 +72,19 @@ def curate_tech_news(rss_urls, keywords):
         else:
             for entry in feed.entries:
                 try:
-                    parse = parse_article(entry.link, keywords)
-                    if parse:
-                        print(parse["score"], entry.link)
-                        print("Keywords NOT in current list")
-                        print(list(set(parse["keywords"]) - set(keywords)))
-                        print("\n")
-                        parse["url"] = entry.link
-                        articles.append(parse)
+                    if is_article_cached(entry.link):
+                        continue
+                    else:
+                        parse = parse_article(entry.link, keywords)
+                        if parse:
+                            print(parse["score"], entry.link)
+                            parse["url"] = entry.link
+                            store_article(
+                                parse["title"],
+                                parse["url"],
+                                parse["summary"],
+                                parse["score"],
+                            )
                 except Exception as e:
                     print(f"{e}")
                     continue
-            print("\n")
-            print(
-                rss,
-                "had",
-                len(articles) - prev_len,
-                "relavant articles out of",
-                len(feed.entries),
-            )
-            print("\n")
-    try:
-        return sorted(articles, key=lambda x: x["score"], reverse=True)[:10]
-    except Exception as e:
-        print(f"Nothing to sort {e}")
-        return articles

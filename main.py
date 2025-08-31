@@ -2,7 +2,8 @@ from crawler import curate_tech_news, soup_crawl
 from approval import send_approval_email, send_test_email
 import json
 import nltk
-
+from database import init_db, show_top_articles
+import time
 from poster import (
     generate_post_text,
     search_image_pixabay,
@@ -10,11 +11,8 @@ from poster import (
     download_image,
 )
 from newspaper import popular_urls
-import matplotlib.pyplot as plt
-from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 
 # Download NLTK data for keyword extraction
-plt.rcParams["font.family"] = "FiraCode Nerd Font"
 with open("config.json", "r") as f:
     config = json.load(f)
 
@@ -24,11 +22,6 @@ x_keys = [
     config["x_api_credentials"]["consumer_secret"],
     config["x_api_credentials"]["access_token"],
     config["x_api_credentials"]["access_token_secret"],
-]
-
-soups_urls = [
-    "https://www.foxnews.com/world/thousands-attend-corgi-competition-featuring-120-teams-across-europe-hes-really-proud",
-    # "https://www.foxnews.com/category/science/air-and-space"
 ]
 
 rss_urls = [
@@ -59,11 +52,16 @@ rss_urls = [
     "https://www.wired.com/feed/tag/ai/latest/rss",
     "https://www.wired.com/feed/category/security/latest/rss",
     "https://www.wired.com/feed/category/science/latest/rss",
+    "https://www.wired.com/feed/category/backchannel/latest/rss",
     "https://defensescoop.com/feed/",
     "https://aiscoop.com/feed/",
+    "https://scitechdaily.com/feed/",
     "https://defensescoop.com/feed/",
     "https://cyberscoop.com/feed/",
     "https://www.popularmechanics.com/rss/all.xml/",
+    "https://www.geekwire.com/science/feed/",
+    "https://www.technewsworld.com/rss-feed",
+    "https://www.geekwire.com/space/feed/",
     "https://arstechnica.com/feed/",
     "https://www.vice.com/en/feed/",
     "https://thecitizen.com/feed/",
@@ -103,7 +101,9 @@ tech_keywords = [
     "potus",
     "scotus",
     "america",
+    "american",
     "united",
+    "house",
     "college",
     "graduate",
     "graduated",
@@ -137,12 +137,25 @@ tech_keywords = [
     "ufo",
     "extraterrestrial",
     "orbit",
+    "orbiting",
+    "orbits",
+    "flying",
+    "fly",
+    "object",
+    "source",
+    "open",
+    "open-source",
+    "department",
+    "branch",
+    "collection",
+    "collections",
+    "archive",
     "monitor",
     "uap",
-    'aerial',
-    'unidentified',
-    'phenomenon',
-    'phenomena',
+    "aerial",
+    "unidentified",
+    "phenomenon",
+    "phenomena",
     "alien",
     "uav",
     "action",
@@ -238,6 +251,8 @@ tech_keywords = [
     "detective",
     "investigate",
     "investigator",
+    "atomics",
+    "anduril",
     "investigation",
     "committee",
     "congress",
@@ -385,9 +400,23 @@ tech_keywords = [
     "air",
     "force",
     "space",
+    "spacex",
+    "nasa",
+    "xai",
+    "chat-gpt",
+    "chatgpt",
+    "gemini",
+    "co-pilot",
+    "copilot",
+    "deepseek",
+    "seek",
+    "deep",
     "defense",
     "shield",
     "star",
+    "stargate",
+    "shield",
+    "starshield",
     "starship",
     "starships",
     "national",
@@ -424,7 +453,12 @@ tech_keywords = [
     "research",
     "researched",
     "researcher",
+    "command",
+    "senate",
     "review",
+    "reviewing",
+    "reviews",
+    "reviewer",
     "deputy",
     "deputize",
     "deputized",
@@ -435,7 +469,8 @@ tech_keywords = [
     "guardian",
     "guarding",
     "win",
-    "winningscandal",
+    "winning",
+    "scandal",
     "blockchain",
     "quantum",
     "robotics",
@@ -506,7 +541,8 @@ tech_keywords = [
     "warfare",
     "advanced",
     "artificial",
-    "intelligenceadvancement",
+    "intelligence",
+    "advancement",
     "discover",
     "discovery",
     "discovered",
@@ -557,10 +593,13 @@ tech_keywords = [
     "content",
     "creator",
     "developer",
+    "development",
+    "updated",
     "develop",
     "create",
     "created",
-    "developedcreates",
+    "developed",
+    "creates",
     "develops",
     "engineer",
     "engineering",
@@ -585,6 +624,14 @@ tech_keywords = [
     "treasury",
     "targeting",
     "target",
+    "helicopter",
+    "airlift",
+    "armys",
+    "navys",
+    "post",
+    "troops",
+    "squadron",
+    "wing",
     "targeted",
     "targets",
     "reserve",
@@ -698,11 +745,11 @@ tech_keywords = [
     "asteroid",
     "comet",
     "scientists",
-    "raid"
+    "raid",
 ]
 
 if __name__ == "__main__":
-    pass
+    start = time.time()
     try:
         nltk.data.find("tokenizers/punkt")
         nltk.data.find("corpora/stopwords")
@@ -712,28 +759,19 @@ if __name__ == "__main__":
         nltk.download("stopwords")
     # for url in soups_urls:
     #     soup_crawl(url)
-    res = curate_tech_news(rss_urls, tech_keywords)
-    for r in res:
-        imgs = []
-        r["post_text"] = generate_post_text(r["summary"], config["genai_key"])
-        print(r["post_text"])
-        res_img = download_image(r["img"], filename="./imgs/res.jpg")
-        if res_img:
-            fig, ax = plt.subplots(layout="tight")
-            image = plt.imread(res_img)
-            ax_img = ax.imshow(image)
-            left, right, bottom, top = ax_img.get_extent()
-            ax.text(0, -200, r["post_text"], fontsize=8, wrap=True)
-            ax.text(0, -100, r["url"], fontsize=8, wrap=True)
-            ax.text(0, 0, r["keywords"], fontsize=8, wrap=True)
-            plt.show()
-        else:
-            fig, ax = plt.subplots(layout="tight")
-            ax.text(0, 0 - (2 * 80), r["post_text"], fontsize=8, wrap=True)
-            ax.text(0, 0 - 80, r["url"], fontsize=8, wrap=True)
-            ax.text(0, 0, r["keywords"], fontsize=8, wrap=True)
-            plt.show()
-        imgs.append(res_img)
+    init_db()
+    curate_tech_news(rss_urls, tech_keywords)
+    print(f"{time.time() - start}", "curate time")
+    res = show_top_articles()
+    print(res.fetchmany(size=10))
+    # for i, r in enumerate(res):
+    #     imgs = []
+    #     print(r)
+    # r["post_text"] = generate_post_text(r["summary"], config["genai_key"])
+    # print(r["post_text"])
+    # res_img = download_image(r["img"], filename=f"./imgs/res{i}.jpg")
+    # if res_img:
+    #     imgs.append(res_img)
     # try:
     #     img_paths = google_image_search(
     #         config["google_img_search"], config["cse_cx"], r["keywords"]
