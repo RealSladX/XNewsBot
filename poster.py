@@ -4,13 +4,14 @@ import requests
 from google_images_search import GoogleImagesSearch
 
 
-def generate_post_text(prompt_text, gen_api_key_):
+def generate_post_text(post, gen_api_key_, cursor):
     client = genai.Client(api_key=gen_api_key_)
 
     response = client.models.generate_content(
         model="gemini-2.5-flash",
-        contents=f"Develop an X post based on the following summary (under 280 chars). Do not use emojis or hashtags: {prompt_text}.",
+        contents=f"Develop an X post based on the following summary (under 280 chars). Do not use emojis or hashtags: {post[3]}.",
     )
+    cursor.execute("UPDATE crawled_articles SET generated=1 WHERE id==?", (post[0],))
     return response.text
 
 
@@ -115,9 +116,7 @@ def post_to_x(
             )
         else:
             try:
-                response = client.create_tweet(
-                    text=post, media_ids=media.media_id
-                )
+                response = client.create_tweet(text=post, media_ids=media.media_id)
                 print(f"Posted to X: {post} (Tweet ID: {response.data['id']})")
             except tweepy.TweepyException as e:
                 if e.response.status_code == 429:

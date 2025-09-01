@@ -15,6 +15,7 @@ def init_db():
             summary TEXT,
             score REAL,
             img_url TEXT,
+            generated BOOL,
             crawl_timestamp DATETIME NOT NULL
         )
     """)
@@ -36,15 +37,13 @@ def init_db():
 
 def is_article_cached(url, cursor):
     """Check if an article URL is in the database and recently crawled."""
-    cursor.execute(
+    return cursor.execute(
         """
         SELECT url FROM crawled_articles
         WHERE url = ?
     """,
         (url,),
-    )
-    result = cursor.fetchone()
-    return result
+    ).fetchone()
 
 
 def store_article(title, url, summary, score, img_url, cursor, conn):
@@ -52,10 +51,10 @@ def store_article(title, url, summary, score, img_url, cursor, conn):
     try:
         cursor.execute(
             """
-            INSERT INTO crawled_articles (title, url, summary, score, img_url, crawl_timestamp)
+            INSERT INTO crawled_articles (title, url, summary, score, img_url, generated, crawl_timestamp)
             VALUES (?, ?, ?, ?, ?, ?)
         """,
-            (title, url, summary, score, img_url, datetime.now()),
+            (title, url, summary, score, img_url, 0, datetime.now()),
         )
     except Exception as e:
         print(f"{e}")
@@ -66,12 +65,10 @@ def store_article(title, url, summary, score, img_url, cursor, conn):
 
 def get_cached_posts(article_id, cursor):
     """Retrieve cached posts for an article ID."""
-    cursor.execute(
+    return cursor.execute(
         "SELECT post_text, img_url FROM generated_posts WHERE article_id = ?",
         (article_id,),
-    )
-    posts = cursor.fetchall()
-    return [(post_text, image_url) for post_text, image_url in posts]
+    ).fetchall()
 
 
 def store_post(article_id, post, img_url, cursor, conn):
@@ -85,18 +82,25 @@ def store_post(article_id, post, img_url, cursor, conn):
     )
     conn.commit()
 
+
 def clear_posts(cursor, conn):
     cursor.execute("DROP TABLE IF EXISTS generated_posts")
     conn.commit()
 
-def show_top_articles(size, cursor):
+
+def show_ungenerated_articles(size, cursor):
     return cursor.execute(
-        "SELECT * FROM crawled_articles ORDER BY score DESC"
+        "SELECT * FROM crawled_articles WHERE generated == 0 ORDER BY score DESC"
     ).fetchmany(size=size)
 
 
 def show_unemailed_posts(size, cursor):
-    return cursor.execute("SELECT * FROM generated_posts WHERE emailed == 0").fetchmany(size=size)
+    return cursor.execute("SELECT * FROM generated_posts WHERE emailed == 0").fetchmany(
+        size=size
+    )
+
 
 def show_unposted_posts(size, cursor):
-    return cursor.execute("SELECT * FROM generated_posts WHERE posted == 0").fetchmany(size=size)
+    return cursor.execute("SELECT * FROM generated_posts WHERE posted == 0").fetchmany(
+        size=size
+    )

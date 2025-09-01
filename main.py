@@ -3,7 +3,7 @@ from approval import send_approval_email
 import json
 from database import (
     init_db,
-    show_top_articles,
+    show_ungenerated_articles,
     store_post,
     get_cached_posts,
     show_unemailed_posts,
@@ -25,8 +25,6 @@ with open("config.json", "r") as f:
 
 if __name__ == "__main__":
     conn, cur = init_db()
-    clear_posts(cur, conn)
-    conn, cur = init_db()
     ### IF IT IS CRAWL TIME THEN CRAWL
     if (
         (datetime.now(tz).hour == 0 and datetime.now(tz).minute == 0)
@@ -42,7 +40,7 @@ if __name__ == "__main__":
         print("Crawl finished at", datetime.now())
 
     ### GET TOP 10 SCORING ARTICLES
-    res = show_top_articles(5, cur)
+    res = show_ungenerated_articles(5, cur)
 
     ###GO THROUGH TOP 10 ARTICLES
     for i, r in enumerate(res):
@@ -51,8 +49,13 @@ if __name__ == "__main__":
 
         ###IF NOT THEN GENERATE POST
         if not cached:
-            post_text = generate_post_text(r[3], config["genai_key"])
-            img_path = download_image(r[5], filename=f"./imgs/article_{r[0]}.jpg")
+            try:
+                post_text = generate_post_text(r, config["genai_key"], cur)
+                cur.execute("UPDATE")
+            except Exception as e:
+                post_text = "Try regenerating this"
+            finally:
+                img_path = download_image(r[5], filename=f"./imgs/article_{r[0]}.jpg")
             store_post(r[0], post_text, img_path, cur, conn)
 
     ### GET TOP GENERATED POSTS
@@ -61,5 +64,12 @@ if __name__ == "__main__":
     if not post_to_approve:
         post_to_approve = show_unposted_posts(1, cur)
 
-    send_approval_email(post_to_approve[0], config["recepient_email"], config['sender_email'], config['sender_key'], conn, cur)
+    send_approval_email(
+        post_to_approve[0],
+        config["recepient_email"],
+        config["sender_email"],
+        config["sender_key"],
+        conn,
+        cur,
+    )
     conn.close()
