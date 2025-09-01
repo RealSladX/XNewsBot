@@ -52,7 +52,7 @@ def store_article(title, url, summary, score, img_url, cursor, conn):
         cursor.execute(
             """
             INSERT INTO crawled_articles (title, url, summary, score, img_url, generated, crawl_timestamp)
-            VALUES (?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
         """,
             (title, url, summary, score, img_url, 0, datetime.now()),
         )

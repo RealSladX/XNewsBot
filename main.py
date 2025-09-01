@@ -26,7 +26,7 @@ with open("config.json", "r") as f:
 if __name__ == "__main__":
     conn, cur = init_db()
     ### IF IT IS CRAWL TIME THEN CRAWL
-    if (
+    if (not cur.execute("SELECT * FROM crawled_articles").fetchone() or
         (datetime.now(tz).hour == 0 and datetime.now(tz).minute == 0)
         or (datetime.now(tz).hour == 6 and datetime.now(tz).minute == 0)
         or (datetime.now(tz).hour == 12 and datetime.now(tz).minute == 0)
