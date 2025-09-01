@@ -101,6 +101,7 @@ def curate_pop_news(legacy_urls, keywords, cur, conn):
                                 parse["url"],
                                 parse["summary"],
                                 parse["score"],
+                                parse['img'],
                                 cur,
                                 conn
                             )
