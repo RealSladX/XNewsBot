@@ -13,7 +13,7 @@ def init_db():
             url TEXT NOT NULL UNIQUE,
             summary TEXT,
             score REAL,
-            img_url TEXT NOT NULL UNIQUE,
+            img_url TEXT UNIQUE,
             crawl_timestamp DATETIME NOT NULL
         )
     """)
@@ -50,7 +50,7 @@ def store_article(title, url, summary, score, img_url,cursor, conn):
         cursor.execute(
             """
             INSERT INTO crawled_articles (title, url, summary, score, img_url, crawl_timestamp)
-            VALUES (?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?)
         """,
             (title, url, summary, score, img_url, datetime.now()),
         )
