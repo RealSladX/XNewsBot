@@ -25,6 +25,7 @@ def init_db():
             post_text TEXT NOT NULL,
             img_url TEXT NOT NULL,
             generation_timestamp DATETIME NOT NULL,
+            emailed BOOL,
             posted BOOL,
             FOREIGN KEY (article_id) REFERENCES crawled_articles (id)
         )
@@ -77,13 +78,16 @@ def store_post(article_id, post, img_url, cursor, conn):
     """Store generated posts in the database."""
     cursor.execute(
         """
-        INSERT INTO generated_posts (article_id, post_text, img_url, posted, generation_timestamp)
-        VALUES (?, ?, ?, ?, ?)
+        INSERT INTO generated_posts (article_id, post_text, img_url, emailed, posted, generation_timestamp)
+        VALUES (?, ?, ?, ?, ?, ?)
     """,
-        (article_id, post, img_url, 0, datetime.now()),
+        (article_id, post, img_url, 0, 0, datetime.now()),
     )
     conn.commit()
 
+def clear_posts(cursor, conn):
+    cursor.execute("DROP TABLE IF EXISTS generated_posts")
+    conn.commit()
 
 def show_top_articles(size, cursor):
     return cursor.execute(
@@ -91,5 +95,8 @@ def show_top_articles(size, cursor):
     ).fetchmany(size=size)
 
 
-def show_top_posts(size, cursor):
-    return cursor.execute("SELECT * FROM generated_posts").fetchmany(size=size)
+def show_unemailed_posts(size, cursor):
+    return cursor.execute("SELECT * FROM generated_posts WHERE emailed == 0").fetchmany(size=size)
+
+def show_unposted_posts(size, cursor):
+    return cursor.execute("SELECT * FROM generated_posts WHERE posted == 0").fetchmany(size=size)

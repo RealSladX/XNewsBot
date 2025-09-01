@@ -96,45 +96,37 @@ def download_image(image_url, filename="temp_image.jpg"):
 
 def post_to_x(
     keys,
+    post,
 ):
     client = tweepy.Client(
-        consumer_key=keys[0],
-        consumer_secret=keys[1],
-        access_token=keys[2],
-        access_token_secret=keys[3],
+        consumer_key=keys["consumer_key"],
+        consumer_secret=keys["consumer_secret"],
+        access_token=keys["access_token"],
+        access_token_secret=keys["access_token_secret"],
     )
-    media_ids = []
-    # Extract keywords from article title and summary
-    # Search for an image using keywords
-    image_url = search_image(keywords, config["pixabay_api_key"])
-    if image_url:
-        # Download the image
-        filename = download_image(image_url)
-        if filename:
-            try:
-                # Upload image using v1.1 API
-                media = api.media_upload(filename)
-                media_ids = [media.media_id]
-                print(f"Uploaded image, media_id: {media.media_id}")
-                print(f"Deleted temporary file {filename}")
-            except tweepy.TweepyException as e:
-                print(
-                    f"Error uploading media: {e} (Status: {e.response.status_code if e.response else 'Unknown'})"
-                )
-
-    try:
-        response = client.create_tweet(
-            text=post, media_ids=media_ids if media_ids else None
-        )
-        print(f"Posted to X: {post} (Tweet ID: {response.data['id']})")
-    except tweepy.TweepyException as e:
-        if e.response.status_code == 429:
-            retry_after = int(e.response.headers.get("retry-after", 60))
-            print(f"Rate limit hit. Waiting {retry_after} seconds...")
-            time.sleep(retry_after)
-            response = client.create_tweet(text=post)
-            print(f"Posted to X after retry: {post}")
-        else:
+    if post.img_url:
+        try:
+            # Upload image using v1.1 API
+            media = client.media_upload(post.img_url)
+            print(f"Uploaded image, media_id: {media.media_id}")
+        except tweepy.TweepyException as e:
             print(
-                f"Error posting to X: {e} (Status: {e.response.status_code if e.response else 'Unknown'})"
+                f"Error uploading media: {e} (Status: {e.response.status_code if e.response else 'Unknown'})"
             )
+        else:
+            try:
+                response = client.create_tweet(
+                    text=post, media_ids=media.media_id
+                )
+                print(f"Posted to X: {post} (Tweet ID: {response.data['id']})")
+            except tweepy.TweepyException as e:
+                if e.response.status_code == 429:
+                    retry_after = int(e.response.headers.get("retry-after", 60))
+                    print(f"Rate limit hit. Waiting {retry_after} seconds...")
+                    time.sleep(retry_after)
+                    response = client.create_tweet(text=post)
+                    print(f"Posted to X after retry: {post}")
+                else:
+                    print(
+                        f"Error posting to X: {e} (Status: {e.response.status_code if e.response else 'Unknown'})"
+                    )

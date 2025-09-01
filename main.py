@@ -6,15 +6,15 @@ from database import (
     show_top_articles,
     store_post,
     get_cached_posts,
-    show_top_posts,
+    show_unemailed_posts,
+    show_unposted_posts,
+    clear_posts,
 )
 import time
 import pytz
 from datetime import datetime
 from poster import (
     generate_post_text,
-    search_image_pixabay,
-    google_image_search,
     download_image,
 )
 
@@ -25,9 +25,9 @@ with open("config.json", "r") as f:
 
 if __name__ == "__main__":
     conn, cur = init_db()
-
+    clear_posts(cur, conn)
+    conn, cur = init_db()
     ### IF IT IS CRAWL TIME THEN CRAWL
-
     if (
         (datetime.now(tz).hour == 0 and datetime.now(tz).minute == 0)
         or (datetime.now(tz).hour == 6 and datetime.now(tz).minute == 0)
@@ -41,12 +41,8 @@ if __name__ == "__main__":
         print(f"{time.time() - start}", "seconds")
         print("Crawl finished at", datetime.now())
 
-    ### IF IT IS NOT CRAWL TIME THEN TELL US WHEN CRAWL TIME IS
-    else:
-        print("Current Crawl Times: 12AM, 6AM, 12PM, 6PM")
-
     ### GET TOP 10 SCORING ARTICLES
-    res = show_top_articles(10, cur)
+    res = show_top_articles(5, cur)
 
     ###GO THROUGH TOP 10 ARTICLES
     for i, r in enumerate(res):
@@ -60,6 +56,10 @@ if __name__ == "__main__":
             store_post(r[0], post_text, img_path, cur, conn)
 
     ### GET TOP GENERATED POSTS
-    top_posts = show_top_posts(10, cur)
-    print(top_posts)
+    post_to_approve = show_unemailed_posts(1, cur)
+    print(post_to_approve)
+    if not post_to_approve:
+        post_to_approve = show_unposted_posts(1, cur)
+
+    send_approval_email(post_to_approve[0], config["recepient_email"], config['sender_email'], config['sender_key'], conn, cur)
     conn.close()
