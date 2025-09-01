@@ -80,3 +80,6 @@ def store_post(article_id, post, img_url, cursor, conn):
 
 def show_top_articles(size, cursor):
     return cursor.execute("SELECT * FROM crawled_articles ORDER BY score DESC").fetchmany(size=size)
+
+def show_top_posts(size, cursor):
+    return cursor.execute("SELECT * FROM generated_posts").fetchmany(size=size)

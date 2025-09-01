@@ -1,7 +1,7 @@
 from crawler import curate_tech_news, curate_pop_news
 from approval import send_approval_email, send_test_email
 import json
-from database import init_db, show_top_articles, store_post, get_cached_posts
+from database import init_db, show_top_articles, store_post, get_cached_posts, show_top_posts
 import time
 from datetime import datetime
 from poster import (
@@ -34,4 +34,5 @@ if __name__ == "__main__":
             post_text = generate_post_text(r[3], config["genai_key"])
             store_post(r[0], post_text, r[5], cur, conn)
             img_path = download_image(r[5], filename=f"./imgs/article_{r[0]}.jpg")
+    top_posts = show_top_posts(10, cur)
     conn.close()
