@@ -15,6 +15,7 @@ import pytz
 from datetime import datetime
 from poster import (
     generate_post_text,
+    generate_post_text_openai,
     download_image,
 )
 
@@ -50,10 +51,9 @@ if __name__ == "__main__":
         ###IF NOT THEN GENERATE POST
         if not cached:
             try:
-                post_text = generate_post_text(r, config["genai_key"], cur)
-                cur.execute("UPDATE")
+                post_text = generate_post_text_openai(r, config["openai_key"], cur)
             except Exception as e:
-                post_text = "Try regenerating this"
+                post_text = generate_post_text(r, config["genai_key"], cur)
             finally:
                 img_path = download_image(r[5], filename=f"./imgs/article_{r[0]}.jpg")
             store_post(r[0], post_text, img_path, cur, conn)

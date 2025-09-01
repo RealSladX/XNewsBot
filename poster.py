@@ -2,6 +2,13 @@ import tweepy
 from google import genai
 import requests
 from google_images_search import GoogleImagesSearch
+from openai import OpenAI
+def generate_post_text_openai(post, open_ai_key_, cursor):
+    client = OpenAI(api_key=open_ai_key_)
+    response = client.responses.create(model = "gpt-5",
+                input=f"Develop an X post based on the following summary (under 280 chars). Do not use emojis or hashtags: {post[3]}.",)
+    cursor.execute("UPDATE crawled_articles SET generated=1 WHERE id==?", (post[0],))
+    return response.output_text
 
 
 def generate_post_text(post, gen_api_key_, cursor):
