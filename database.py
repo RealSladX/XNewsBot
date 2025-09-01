@@ -13,7 +13,7 @@ def init_db():
             url TEXT NOT NULL UNIQUE,
             summary TEXT,
             score REAL,
-            img_url TEXT UNIQUE,
+            img_url TEXT,
             crawl_timestamp DATETIME NOT NULL
         )
     """)
