@@ -18,7 +18,7 @@ with open("config.json", "r") as f:
 
 if __name__ == "__main__":
     conn, cur = init_db()
-    if (datetime.now().hour == 0 and datetime.now().minute == 0) or (datetime.now().hour == 6 and datetime.now().minute == 0) or (datetime.now().hour == 12 and datetime.now().minute == 0) or (datetime.now().hour == 18 and datetime.now().minute == 0):
+    if (datetime.now().hour == 10) or (datetime.now().hour == 0 and datetime.now().minute == 0) or (datetime.now().hour == 6 and datetime.now().minute == 0) or (datetime.now().hour == 12 and datetime.now().minute == 0) or (datetime.now().hour == 18 and datetime.now().minute == 0):
         print("Crawl started at", datetime.now())
         start = time.time()
         curate_pop_news(config["legacy_urls"], config["keywords"], cur, conn)

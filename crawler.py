@@ -1,7 +1,6 @@
 import feedparser
 from newspaper import Article, build
 import requests
-from bs4 import BeautifulSoup
 from database import is_article_cached, store_article
 
 
@@ -49,15 +48,6 @@ def parse_article(url, score_keywords):
                     "score": score,
                 }
                 return parsing
-
-
-def soup_crawl(url):
-    response = requests.get(url)
-    soup = BeautifulSoup(response.content, "html.parser")
-    for link in soup.find_all("article"):
-        print(link.find_all("a")[0])
-        print("\n")
-
 
 def curate_tech_news(rss_urls, keywords, cur, conn):
     for rss in rss_urls:
