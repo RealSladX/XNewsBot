@@ -13,7 +13,6 @@ from poster import (
 )
 
 tz = pytz.timezone("US/Pacific")
-# Download NLTK data for keyword extraction
 with open("config.json", "r") as f:
     config = json.load(f)
 
