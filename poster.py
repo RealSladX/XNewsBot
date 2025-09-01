@@ -9,7 +9,7 @@ def generate_post_text(prompt_text, gen_api_key_):
 
     response = client.models.generate_content(
         model="gemini-2.5-flash",
-        contents=f"Explain this article summary in an engaging X post (under 280 chars). Do not use emojis or hashtags: {prompt_text}.",
+        contents=f"Develop an X post based on the following summary (under 280 chars). Do not use emojis or hashtags: {prompt_text}.",
     )
     return response.text
 
