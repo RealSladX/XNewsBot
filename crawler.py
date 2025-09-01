@@ -2,6 +2,10 @@ import feedparser
 from newspaper import Article, build
 import requests
 from database import is_article_cached, store_article
+from datetime import datetime
+import pytz
+
+tz = pytz.timezone("US/Pacific")
 
 
 def score_article(text, keywords):
@@ -11,7 +15,7 @@ def score_article(text, keywords):
     for keyword in keywords:
         if keyword.lower() in text:
             score += 10
-    score *= (score + 1) / (len(text)+1)
+    score *= (score + 1) / (len(text) + 1)
     return score
 
 
@@ -26,7 +30,11 @@ def parse_article(url, score_keywords):
         return None
     else:
         article.parse()
-        if article.publish_date and article.publish_date.year < 2025:
+        if (
+            article.publish_date
+            and article.publish_date.year < datetime.now(tz).year
+            and article.publish_date.month != datetime.now(tz).month
+        ):
             return None
         else:
             article.nlp()  # For summary
@@ -36,7 +44,7 @@ def parse_article(url, score_keywords):
             image_url = article.top_image
             article_keywords = article.keywords
             score = score_article(summary, score_keywords)
-            if score < 60:
+            if score < 70:
                 return None
             else:
                 parsing = {
@@ -48,6 +56,7 @@ def parse_article(url, score_keywords):
                     "score": score,
                 }
                 return parsing
+
 
 def curate_tech_news(rss_urls, keywords, cur, conn):
     for rss in rss_urls:
@@ -73,11 +82,12 @@ def curate_tech_news(rss_urls, keywords, cur, conn):
                                 parse["score"],
                                 parse["img"],
                                 cur,
-                                conn
+                                conn,
                             )
                 except Exception as e:
                     print(f"{e}")
                     continue
+
 
 def curate_pop_news(legacy_urls, keywords, cur, conn):
     for source in legacy_urls:
@@ -101,9 +111,9 @@ def curate_pop_news(legacy_urls, keywords, cur, conn):
                                 parse["url"],
                                 parse["summary"],
                                 parse["score"],
-                                parse['img'],
+                                parse["img"],
                                 cur,
-                                conn
+                                conn,
                             )
                 except Exception as e:
                     print(f"{e}")

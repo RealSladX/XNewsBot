@@ -22,4 +22,3 @@ def send_approval_email(articles, admin_email, sender_email, sender_key):
         server.quit()
     except Exception as e:
         print(f"Error sending email: {e}")
-

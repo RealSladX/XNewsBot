@@ -3,6 +3,7 @@ from datetime import datetime
 
 DB_FILE = "archive.db"
 
+
 def init_db():
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
@@ -31,6 +32,7 @@ def init_db():
     conn.commit()
     return conn, cursor
 
+
 def is_article_cached(url, cursor):
     """Check if an article URL is in the database and recently crawled."""
     cursor.execute(
@@ -44,7 +46,7 @@ def is_article_cached(url, cursor):
     return result
 
 
-def store_article(title, url, summary, score, img_url,cursor, conn):
+def store_article(title, url, summary, score, img_url, cursor, conn):
     """Store a new article in the database and return its ID."""
     try:
         cursor.execute(
@@ -60,11 +62,16 @@ def store_article(title, url, summary, score, img_url,cursor, conn):
         conn.commit()
         return cursor.lastrowid
 
+
 def get_cached_posts(article_id, cursor):
     """Retrieve cached posts for an article ID."""
-    cursor.execute('SELECT post_text, img_url FROM generated_posts WHERE article_id = ?', (article_id,))
+    cursor.execute(
+        "SELECT post_text, img_url FROM generated_posts WHERE article_id = ?",
+        (article_id,),
+    )
     posts = cursor.fetchall()
     return [(post_text, image_url) for post_text, image_url in posts]
+
 
 def store_post(article_id, post, img_url, cursor, conn):
     """Store generated posts in the database."""
@@ -73,13 +80,16 @@ def store_post(article_id, post, img_url, cursor, conn):
         INSERT INTO generated_posts (article_id, post_text, img_url, posted, generation_timestamp)
         VALUES (?, ?, ?, ?, ?)
     """,
-        (article_id, post, img_url, 0,datetime.now()),
+        (article_id, post, img_url, 0, datetime.now()),
     )
     conn.commit()
 
 
 def show_top_articles(size, cursor):
-    return cursor.execute("SELECT * FROM crawled_articles ORDER BY score DESC").fetchmany(size=size)
+    return cursor.execute(
+        "SELECT * FROM crawled_articles ORDER BY score DESC"
+    ).fetchmany(size=size)
+
 
 def show_top_posts(size, cursor):
     return cursor.execute("SELECT * FROM generated_posts").fetchmany(size=size)
