@@ -3,6 +3,7 @@ from approval import send_approval_email
 import json
 from database import init_db, show_top_articles, store_post, get_cached_posts, show_top_posts
 import time
+import pytz
 from datetime import datetime
 from poster import (
     generate_post_text,
@@ -11,6 +12,7 @@ from poster import (
     download_image,
 )
 
+tz = pytz.timezone("US/Pacific")
 # Download NLTK data for keyword extraction
 with open("config.json", "r") as f:
     config = json.load(f)
@@ -18,7 +20,7 @@ with open("config.json", "r") as f:
 
 if __name__ == "__main__":
     conn, cur = init_db()
-    if (datetime.now().hour == 10) or (datetime.now().hour == 0 and datetime.now().minute == 0) or (datetime.now().hour == 6 and datetime.now().minute == 0) or (datetime.now().hour == 12 and datetime.now().minute == 0) or (datetime.now().hour == 18 and datetime.now().minute == 0):
+    if (datetime.now(tz).hour == 11) or (datetime.now(tz).hour == 0 and datetime.now(tz).minute == 0) or (datetime.now(tz).hour == 6 and datetime.now(tz).minute == 0) or (datetime.now(tz).hour == 12 and datetime.now(tz).minute == 0) or (datetime.now(tz).hour == 18 and datetime.now(tz).minute == 0):
         print("Crawl started at", datetime.now())
         start = time.time()
         curate_pop_news(config["legacy_urls"], config["keywords"], cur, conn)
