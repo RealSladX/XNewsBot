@@ -1,5 +1,5 @@
 from crawler import curate_tech_news, curate_pop_news
-from approval import send_approval_email, send_test_email
+from approval import send_approval_email
 import json
 from database import init_db, show_top_articles, store_post, get_cached_posts, show_top_posts
 import time
