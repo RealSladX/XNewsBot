@@ -41,23 +41,24 @@ if __name__ == "__main__":
         print(f"{time.time() - start}", "seconds")
         print("Crawl finished at", datetime.now())
 
-    ### GET TOP 10 SCORING ARTICLES
-    res = show_ungenerated_articles(5, cur)
+    ### IF IT IS GENERATING TIME THEN GENERATE
+    if (datetime.now(tz).hour == 6) or (datetime.now(tz).hour == 18):
+        ### GET TOP 10 SCORING ARTICLES
+        res = show_ungenerated_articles(5, cur)
+        ###GO THROUGH TOP 10 ARTICLES
+        for i, r in enumerate(res):
+            ###CHECK IF ARTICLE HAS GENERATED POST
+            cached = get_cached_posts(r[0], cur)
 
-    ###GO THROUGH TOP 10 ARTICLES
-    for i, r in enumerate(res):
-        ###CHECK IF ARTICLE HAS GENERATED POST
-        cached = get_cached_posts(r[0], cur)
-
-        ###IF NOT THEN GENERATE POST
-        if not cached:
-            try:
-                post_text = generate_post_text_openai(r, config["openai_key"], cur)
-            except Exception as e:
-                post_text = generate_post_text(r, config["genai_key"], cur)
-            finally:
-                img_path = download_image(r[5], filename=f"./imgs/article_{r[0]}.jpg")
-            store_post(r[0], post_text, img_path, cur, conn)
+            ###IF NOT THEN GENERATE POST
+            if not cached:
+                try:
+                    post_text = generate_post_text_openai(r, config["openai_key"], cur)
+                except Exception as e:
+                    post_text = generate_post_text(r, config["genai_key"], cur)
+                finally:
+                    img_path = download_image(r[5], filename=f"./imgs/article_{r[0]}.jpg")
+                store_post(r[0], post_text, img_path, cur, conn)
 
     ### GET TOP GENERATED POSTS
     post_to_approve = show_unemailed_posts(1, cur)
