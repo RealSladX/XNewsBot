@@ -42,7 +42,7 @@ if __name__ == "__main__":
         print("Crawl finished at", datetime.now())
 
     ### IF IT IS GENERATING TIME THEN GENERATE
-    if (datetime.now(tz).hour == 6) or (datetime.now(tz).hour == 18):
+    if (not cur.execute("SELECT * FROM generated_posts").fetchone()) or (datetime.now(tz).hour == 6) or (datetime.now(tz).hour == 18):
         ### GET TOP 10 SCORING ARTICLES
         res = show_ungenerated_articles(5, cur)
         ###GO THROUGH TOP 10 ARTICLES
@@ -55,19 +55,20 @@ if __name__ == "__main__":
                 try:
                     post_text = generate_post_text_openai(r, config["openai_key"], cur)
                 except Exception as e:
+                    print(f"{e}")
                     post_text = generate_post_text(r, config["genai_key"], cur)
                 finally:
                     img_path = download_image(r[5], filename=f"./imgs/article_{r[0]}.jpg")
                 store_post(r[0], post_text, img_path, cur, conn)
 
     ### GET TOP GENERATED POSTS
-    post_to_approve = show_unemailed_posts(1, cur)
-    print(post_to_approve)
-    if not post_to_approve:
-        post_to_approve = show_unposted_posts(1, cur)
+    posts_to_approve = show_unemailed_posts(3, cur)
+    print(posts_to_approve)
+    if not posts_to_approve:
+        posts_to_approve = show_unposted_posts(3, cur)
 
     send_approval_email(
-        post_to_approve[0],
+        posts_to_approve,
         config["recepient_email"],
         config["sender_email"],
         config["sender_key"],
